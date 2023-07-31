@@ -18,27 +18,51 @@ import java.util.Objects;
  */
 public class Repository {
 
+    /**
+     * The id of the repository.
+     */
     @JsonProperty(value = "id")
     private Long id;
 
+    /**
+     * The name of the repository.
+     */
     @JsonProperty(value = "name")
     private String name;
 
+    /**
+     * The full name of the repository
+     */
     @JsonProperty(value = "full_name")
     private String fullName;
 
+    /**
+     * The html url of the repository.
+     */
     @JsonProperty(value = "html_url")
     private String htmlUrl;
 
+    /**
+     * The description of the repository.
+     */
     @JsonProperty(value = "description")
     private String description;
 
+    /**
+     * The language api url of the repository.
+     */
     @JsonProperty(value = "languages_url")
     private String languagesUrl;
 
+    /**
+     * Is the repository a fork one or not.
+     */
     @JsonProperty(value = "fork")
     private boolean fork;
 
+    /**
+     * The url of the repository.
+     */
     @JsonProperty(value = "url")
     private String url;
 
