@@ -1,4 +1,11 @@
-package com.lxlgarnett;
+/*
+ * Created by Xiaolei Li on 7/31/23, 7:37 PM
+ * Copyright (c) 2023 Xiaolei Li.
+ * All rights reserved.
+ * Last modified 7/31/23, 5:20 PM
+ */
+
+package com.lxlgarnett.githubprofilestatus.resource;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
