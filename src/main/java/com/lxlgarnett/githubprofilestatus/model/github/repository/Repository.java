@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
- * Model class of response for "https://api.github.com/users/{userName}/repos"
+ * Model class of response for "<a href="https://api.github.com/users/{userName}/repos">GitHub user repos api</a>"
  *
  * @author xiaolei
  */
