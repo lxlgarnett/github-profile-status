@@ -5,7 +5,8 @@
   "main": "api/index.js",
   "scripts": {
     "start": "node api/index.js",
-    "test": "mocha"
+    "test": "mocha",
+    "format": "prettier --write 'api/**/*.js' 'test/**/*.js'"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "chai": "^6.2.1",
-    "mocha": "^11.7.5"
+    "mocha": "^11.7.5",
+    "prettier": "^3.7.4"
   }
 }

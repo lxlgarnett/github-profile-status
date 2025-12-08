@@ -11,6 +11,7 @@ const server = http.createServer(async (req, res) => {
   console.log('Request received');
   const reqUrl = url.parse(req.url, true);
   const username = reqUrl.pathname.slice(1);
+  const format = reqUrl.query.format;
 
   if (!username) {
     console.log('No username provided');
@@ -21,12 +22,16 @@ const server = http.createServer(async (req, res) => {
 
   try {
     console.log(`Fetching repos for ${username}`);
-    const repos = await axios.get(`https://api.github.com/users/${username}/repos`);
+    const repos = await axios.get(
+      `https://api.github.com/users/${username}/repos`
+    );
     console.log('Repos fetched');
 
+    const nonForkRepos = repos.data.filter((repo) => !repo.fork);
+
     const langStats = {};
-    const langPromises = repos.data.map(repo =>
-      axios.get(`https://api.github.com/repos/${username}/${repo.name}/languages`)
+    const langPromises = nonForkRepos.map((repo) =>
+      axios.get(`https://api.github.com/repos/${repo.full_name}/languages`)
     );
 
     console.log('Fetching languages');
@@ -43,25 +48,33 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    if (format === 'json') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(langStats));
+      return;
+    }
+
     const languages = Object.keys(langStats);
     const counts = Object.values(langStats);
 
-const configuration = {
+    const configuration = {
       type: 'pie',
       data: {
         labels: languages,
-        datasets: [{
-          data: counts,
-          backgroundColor: [
-            '#3498db',
-            '#e74c3c',
-            '#2ecc71',
-            '#f1c40f',
-            '#9b59b6',
-            '#1abc9c',
-            '#34495e',
-          ],
-        }],
+        datasets: [
+          {
+            data: counts,
+            backgroundColor: [
+              '#3498db',
+              '#e74c3c',
+              '#2ecc71',
+              '#f1c40f',
+              '#9b59b6',
+              '#1abc9c',
+              '#34495e',
+            ],
+          },
+        ],
       },
     };
 
