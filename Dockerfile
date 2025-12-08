@@ -15,8 +15,12 @@ RUN npm install --omit=dev
 # Copy the rest of the application code
 COPY . .
 
-# Create a non-root user and switch to it for security best practices
-RUN groupadd --system nodejs && useradd --system --gid nodejs nodejs
+# Create a non-root user and set up home directory with proper permissions
+RUN groupadd --system nodejs && \
+    useradd --system --gid nodejs --create-home nodejs && \
+    chown -R nodejs:nodejs /app
+
+# Switch to the non-root user for security best practices
 USER nodejs
 
 # Cloud Run injects the PORT environment variable, our app should listen on it

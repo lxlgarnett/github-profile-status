@@ -9,7 +9,18 @@ const height = 400;
 const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
 const server = http.createServer(async (req, res) => {
-  console.log('Request received');
+  console.log(`Request received for URL: ${req.url}`);
+
+  const port = process.env.PORT || 3000;
+  console.log(`App is running on port: ${port}`);
+
+  const githubToken = process.env.GITHUB_TOKEN;
+  if (githubToken) {
+    console.log(`GITHUB_TOKEN is set. Token starts with: ${githubToken.substring(0, 4)}...`);
+  } else {
+    console.log('GITHUB_TOKEN is NOT set.');
+  }
+
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
   const username = reqUrl.pathname.slice(1);
   const format = reqUrl.searchParams.get('format');
@@ -22,8 +33,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    console.log('Entering try block...');
     const headers = {
-      Authorization: `token ${process.env.GITHUB_TOKEN}`,
+      Authorization: `token ${githubToken}`,
     };
 
     console.log(`Fetching repos for ${username}`);
@@ -92,7 +104,12 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end(dataUrl);
   } catch (error) {
-    console.error('Error in server:', error);
+    console.error('Error in server:', error.message);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      console.error('Error response headers:', error.response.headers);
+    }
     res.writeHead(500, { 'Content-Type': 'text/plain' });
     res.end('Internal Server Error');
   }
