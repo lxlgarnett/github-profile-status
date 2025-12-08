@@ -1,5 +1,6 @@
+require('dotenv').config();
 const http = require('http');
-const url = require('url');
+const { URL } = require('url');
 const axios = require('axios');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 
@@ -9,9 +10,9 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
 const server = http.createServer(async (req, res) => {
   console.log('Request received');
-  const reqUrl = url.parse(req.url, true);
+  const reqUrl = new URL(req.url, `http://${req.headers.host}`);
   const username = reqUrl.pathname.slice(1);
-  const format = reqUrl.query.format;
+  const format = reqUrl.searchParams.get('format');
 
   if (!username) {
     console.log('No username provided');
@@ -21,9 +22,14 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    const headers = {
+      Authorization: `token ${process.env.GITHUB_TOKEN}`,
+    };
+
     console.log(`Fetching repos for ${username}`);
     const repos = await axios.get(
-      `https://api.github.com/users/${username}/repos`
+      `https://api.github.com/users/${username}/repos`,
+      { headers }
     );
     console.log('Repos fetched');
 
@@ -31,7 +37,9 @@ const server = http.createServer(async (req, res) => {
 
     const langStats = {};
     const langPromises = nonForkRepos.map((repo) =>
-      axios.get(`https://api.github.com/repos/${repo.full_name}/languages`)
+      axios.get(`https://api.github.com/repos/${repo.full_name}/languages`, {
+        headers,
+      })
     );
 
     console.log('Fetching languages');
