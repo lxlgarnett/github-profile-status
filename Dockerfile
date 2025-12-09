@@ -2,6 +2,11 @@
 # Pinning to a specific version for consistency
 FROM node:18.19.0-slim
 
+# Install fonts to ensure proper character rendering
+RUN apt-get update && \
+    apt-get install -y fonts-noto fonts-noto-cjk fonts-dejavu-core fontconfig && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set the working directory
 WORKDIR /app
 
