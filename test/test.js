@@ -25,19 +25,18 @@ describe('API Tests', function () {
     server.kill();
   });
 
-  it('should return a valid data URL for a valid username', (done) => {
-    axios
-      .get('http://localhost:3001/lxlgarnett')
-      .then((response) => {
-        expect(response.status).to.equal(200);
-        expect(response.headers['content-type']).to.equal('text/plain');
-        expect(response.data).to.include('data:image/png;base64,');
-        done();
-      })
-      .catch((error) => {
-        console.error(error);
-        done(error);
-      });
+  it('should return a valid PNG image for a valid username', async () => {
+    const response = await axios.get('http://localhost:3001/lxlgarnett', {
+      responseType: 'arraybuffer',
+    });
+    expect(response.status).to.equal(200);
+    expect(response.headers['content-type']).to.equal('image/png');
+    // Check for PNG magic numbers
+    const magicNumbers = response.data.slice(0, 8);
+    const pngSignature = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+    expect(Buffer.compare(Buffer.from(magicNumbers), pngSignature)).to.equal(0);
   });
 
   it('should return language statistics in JSON format, excluding forked repositories', async () => {
