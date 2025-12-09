@@ -3,10 +3,18 @@ const http = require('http');
 const { URL } = require('url');
 const axios = require('axios');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
+const ChartDataLabels = require('chartjs-plugin-datalabels');
 
 const width = 400;
 const height = 400;
-const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
+const chartJSNodeCanvas = new ChartJSNodeCanvas({
+  width,
+  height,
+  backgroundColour: '#22272e',
+  plugins: {
+    modern: [ChartDataLabels],
+  },
+});
 
 const server = http.createServer(async (req, res) => {
   console.log(`Request received for URL: ${req.url}`);
@@ -93,8 +101,31 @@ const server = http.createServer(async (req, res) => {
               '#1abc9c',
               '#34495e',
             ],
+            borderColor: '#22272e',
+            borderWidth: 1,
           },
         ],
+      },
+      options: {
+        plugins: {
+          legend: {
+            labels: {
+              color: '#ffffff',
+            },
+          },
+          datalabels: {
+            color: '#ffffff',
+            formatter: (value, ctx) => {
+              let sum = 0;
+              let dataArr = ctx.chart.data.datasets[0].data;
+              dataArr.map((data) => {
+                sum += data;
+              });
+              let percentage = ((value * 100) / sum).toFixed(1) + '%';
+              return percentage;
+            },
+          },
+        },
       },
     };
 
