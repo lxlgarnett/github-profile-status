@@ -152,6 +152,11 @@ const server = http.createServer(async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+
+if (require.main === module) {
+  server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+module.exports = server;
