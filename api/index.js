@@ -99,10 +99,15 @@ const server = http.createServer(async (req, res) => {
     };
 
     console.log('Generating chart');
-    const dataUrl = await chartJSNodeCanvas.renderToDataURL(configuration);
+    const dataUrl = await chartJSNodeCanvas.renderToDataURL(configuration, 'image/png');
+    const base64Image = dataUrl.replace(/^data:image\/png;base64,/, '');
+    const imageBuffer = Buffer.from(base64Image, 'base64');
     console.log('Chart generated');
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end(dataUrl);
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': imageBuffer.length,
+    });
+    res.end(imageBuffer);
   } catch (error) {
     console.error('Error in server:', error.message);
     if (error.response) {
