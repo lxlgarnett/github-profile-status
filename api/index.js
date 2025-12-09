@@ -111,10 +111,16 @@ const server = http.createServer(async (req, res) => {
           legend: {
             labels: {
               color: '#ffffff',
+              font: {
+                family: 'sans-serif',
+              },
             },
           },
           datalabels: {
             color: '#ffffff',
+            font: {
+              family: 'sans-serif',
+            },
             formatter: (value, ctx) => {
               let sum = 0;
               let dataArr = ctx.chart.data.datasets[0].data;
