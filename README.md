@@ -11,7 +11,7 @@ This project provides a simple API to generate a pie chart visualizing the most 
 ## Prerequisites
 
 - Node.js
-- A GitHub Personal Access Token (required)
+- (Optional) A GitHub Personal Access Token
 
 ## Installation & Setup
 
@@ -33,7 +33,7 @@ This project provides a simple API to generate a pie chart visualizing the most 
    GITHUB_TOKEN=your_github_personal_access_token
    PORT=3000
    ```
-   *Note: A `GITHUB_TOKEN` is required. Without it, requests will fail with a 401 Unauthorized error. Authentication also increases the API rate limit to 5,000 requests/hour.*
+   *Note: A `GITHUB_TOKEN` is recommended. Without it, the server will use unauthenticated GitHub API requests limited to 60 requests/hour.*
 
 4. **Start the server:**
    ```bash

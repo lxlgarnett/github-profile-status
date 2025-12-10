@@ -26,7 +26,7 @@ const server = http.createServer(async (req, res) => {
   if (githubToken) {
     console.log(`GITHUB_TOKEN is set. Token starts with: ${githubToken.substring(0, 4)}...`);
   } else {
-    console.log('GITHUB_TOKEN is NOT set.');
+    console.log('GITHUB_TOKEN is NOT set. Using unauthenticated GitHub API access.');
   }
 
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -42,9 +42,11 @@ const server = http.createServer(async (req, res) => {
 
   try {
     console.log('Entering try block...');
-    const headers = {
-      Authorization: `token ${githubToken}`,
-    };
+    const headers = githubToken
+      ? {
+          Authorization: `token ${githubToken}`,
+        }
+      : {};
 
     console.log(`Fetching repos for ${username}`);
     const repos = await axios.get(
