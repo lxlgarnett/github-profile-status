@@ -1,26 +1,66 @@
 # GitHub Profile Status
 
-This project provides an API to generate a pie chart of the top used languages for a given GitHub user.
+This project provides a simple API to generate a pie chart visualizing the most used programming languages for a given GitHub user. It analyzes the user's public, non-forked repositories to aggregate language statistics.
 
-## Usage
+## Features
+
+- **Visual Pie Chart:** Generates a PNG image of language distribution.
+- **JSON Data:** Option to retrieve raw language statistics in JSON format.
+- **Fork Filtering:** Automatically excludes forked repositories to reflect the user's actual contributions.
+
+## Prerequisites
+
+- Node.js
+- (Optional) A GitHub Personal Access Token
+
+## Installation & Setup
 
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/lxlgarnett/github-profile-status.git
+   cd github-profile-status
    ```
+
 2. **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3. **Start the server:**
-    ```bash
-    npm start
-    ```
-4. **Access the API:**
-   Open your browser and navigate to `http://localhost:3000/{your-github-username}`.
+   ```bash
+   npm install
+   ```
 
-## Example
+3. **Configuration:**
+   Create a `.env` file in the root directory to store your environment variables. The `GITHUB_TOKEN` entry is optional—include it only if you have a personal access token to raise rate limits.
 
+   ```env
+   # Optional: include only if you have a token
+   GITHUB_TOKEN=your_github_personal_access_token
+
+   # Optional: defaults to 3000
+   PORT=3000
+   ```
+   *If `GITHUB_TOKEN` is omitted or left blank, the server will **not** send an Authorization header, and GitHub will treat requests as unauthenticated (60 requests/hour limit).* 
+
+4. **Start the server:**
+   ```bash
+   npm start
+   ```
+
+## Usage
+
+Once the server is running (default port 3000), you can access the API via your browser or HTTP client.
+
+### Generate Image
+Navigate to:
+`http://localhost:3000/{username}`
+
+**Example:**
 `http://localhost:3000/lxlgarnett`
 
-This will generate a pie chart of the top used languages for the user `lxlgarnett`.
+### Get JSON Data
+Add the `?format=json` query parameter to get the raw byte counts per language:
+`http://localhost:3000/{username}?format=json`
+
+**Example:**
+`http://localhost:3000/lxlgarnett?format=json`
+
+## License
+
+ISC
