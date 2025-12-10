@@ -27,13 +27,16 @@ This project provides a simple API to generate a pie chart visualizing the most 
    ```
 
 3. **Configuration:**
-   Create a `.env` file in the root directory to store your environment variables:
+   Create a `.env` file in the root directory to store your environment variables. The `GITHUB_TOKEN` entry is optional—include it only if you have a personal access token to raise rate limits.
 
    ```env
+   # Optional: include only if you have a token
    GITHUB_TOKEN=your_github_personal_access_token
+
+   # Optional: defaults to 3000
    PORT=3000
    ```
-   *Note: A `GITHUB_TOKEN` is recommended. Without it, the server will use unauthenticated GitHub API requests limited to 60 requests/hour.*
+   *If `GITHUB_TOKEN` is omitted or left blank, the server will **not** send an Authorization header, and GitHub will treat requests as unauthenticated (60 requests/hour limit).* 
 
 4. **Start the server:**
    ```bash

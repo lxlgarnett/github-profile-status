@@ -22,7 +22,7 @@ const server = http.createServer(async (req, res) => {
   const port = process.env.PORT || 3000;
   console.log(`App is running on port: ${port}`);
 
-  const githubToken = process.env.GITHUB_TOKEN;
+  const githubToken = process.env.GITHUB_TOKEN?.trim();
   if (githubToken) {
     console.log(`GITHUB_TOKEN is set. Token starts with: ${githubToken.substring(0, 4)}...`);
   } else {
