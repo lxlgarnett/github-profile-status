@@ -15,6 +15,13 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({
     modern: [ChartDataLabels],
   },
 });
+const normalizeToken = (token) => {
+  if (!token) return '';
+  const trimmed = token.trim();
+  const lowered = trimmed.toLowerCase();
+
+  return trimmed && lowered !== 'undefined' && lowered !== 'null' ? trimmed : '';
+};
 
 const server = http.createServer(async (req, res) => {
   console.log(`Request received for URL: ${req.url}`);
@@ -22,7 +29,7 @@ const server = http.createServer(async (req, res) => {
   const port = process.env.PORT || 3000;
   console.log(`App is running on port: ${port}`);
 
-  const githubToken = process.env.GITHUB_TOKEN?.trim();
+  const githubToken = normalizeToken(process.env.GITHUB_TOKEN);
   if (githubToken) {
     console.log(`GITHUB_TOKEN is set. Token starts with: ${githubToken.substring(0, 4)}...`);
   } else {
