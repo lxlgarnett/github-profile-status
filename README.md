@@ -63,4 +63,4 @@ Add the `?format=json` query parameter to get the raw byte counts per language:
 
 ## License
 
-ISC
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
