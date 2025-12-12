@@ -5,6 +5,8 @@ const axios = require('axios');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const ChartDataLabels = require('chartjs-plugin-datalabels');
 
+const axiosInstance = axios.create({ proxy: false });
+
 const width = 400;
 const height = 400;
 const chartJSNodeCanvas = new ChartJSNodeCanvas({
@@ -39,7 +41,7 @@ const server = http.createServer(async (req, res) => {
 
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
   const username = reqUrl.pathname.slice(1);
-  const format = reqUrl.searchParams.get('format') || 'png';
+  const format = (reqUrl.searchParams.get('format') || 'png').toLowerCase();
 
   if (!username) {
     console.log('No username provided');
@@ -57,7 +59,7 @@ const server = http.createServer(async (req, res) => {
       : {};
 
     console.log(`Fetching repos for ${username}`);
-    const repos = await axios.get(
+    const repos = await axiosInstance.get(
       `https://api.github.com/users/${username}/repos`,
       { headers }
     );
@@ -67,7 +69,7 @@ const server = http.createServer(async (req, res) => {
 
     const langStats = {};
     const langPromises = nonForkRepos.map((repo) =>
-      axios.get(`https://api.github.com/repos/${repo.full_name}/languages`, {
+      axiosInstance.get(`https://api.github.com/repos/${repo.full_name}/languages`, {
         headers,
       })
     );
@@ -84,6 +86,13 @@ const server = http.createServer(async (req, res) => {
           langStats[lang] = langResult.data[lang];
         }
       }
+    }
+
+    if (!['png', 'jpg', 'jpeg', 'json'].includes(format)) {
+      console.log(`Unsupported format requested: ${format}`);
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Unsupported format. Use png, jpg, jpeg, or json.');
+      return;
     }
 
     if (format === 'json') {

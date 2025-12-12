@@ -94,6 +94,21 @@ describe('API Tests', function () {
     expect(Buffer.compare(Buffer.from(magicNumbers), jpgSignature)).to.equal(0);
   });
 
+  it('should treat format parameter case-insensitively', async () => {
+    mockGithubResponse();
+
+    const response = await axios.get(`http://localhost:${PORT}/lxlgarnett?format=JPEG`, {
+      responseType: 'arraybuffer',
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.headers['content-type']).to.equal('image/jpeg');
+
+    const magicNumbers = response.data.slice(0, 3);
+    const jpgSignature = Buffer.from([0xff, 0xd8, 0xff]);
+    expect(Buffer.compare(Buffer.from(magicNumbers), jpgSignature)).to.equal(0);
+  });
+  
   it('should return language statistics in JSON format, excluding forked repositories', async () => {
     mockGithubResponse();
 
@@ -109,11 +124,24 @@ describe('API Tests', function () {
     expect(response.data).to.have.property('Kotlin', 1000);
     expect(response.data).to.have.property('Python', 2000);
     
-    // Verify forked repo languages are NOT present (we didn't even mock the call, 
+    // Verify forked repo languages are NOT present (we didn't even mock the call,
     // so if it tried to fetch it would fail or return 404/error from nock if strict)
     expect(response.data).to.not.have.property('Java');
   });
 
+  it('should return a 400 error for unsupported format', async () => {
+    mockGithubResponse();
+
+    try {
+      await axios.get(`http://localhost:${PORT}/lxlgarnett?format=gif`);
+    } catch (error) {
+      expect(error.response.status).to.equal(400);
+      expect(error.response.data).to.equal(
+        'Unsupported format. Use png, jpg, jpeg, or json.'
+      );
+    }
+  });
+  
   it('should return a 400 error for no username', async () => {
     try {
       await axios.get(`http://localhost:${PORT}/`);

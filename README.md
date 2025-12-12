@@ -53,7 +53,7 @@ Navigate to:
 
 This generates a PNG image by default. You can specify the format using the `format` query parameter.
 
-**Supported Formats:** `png` (default), `jpg` (or `jpeg`)
+**Supported Formats:** `png` (default), `jpg` (or `jpeg`). Formats are case-insensitive; unsupported formats return `400 Bad Request`.
 
 **Examples:**
 - Default (PNG): `http://localhost:3000/lxlgarnett`
