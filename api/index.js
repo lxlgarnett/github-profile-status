@@ -15,6 +15,7 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({
     modern: [ChartDataLabels],
   },
 });
+
 const normalizeToken = (token) => {
   if (!token) return '';
   const trimmed = token.trim();
@@ -38,7 +39,7 @@ const server = http.createServer(async (req, res) => {
 
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
   const username = reqUrl.pathname.slice(1);
-  const format = reqUrl.searchParams.get('format');
+  const format = reqUrl.searchParams.get('format') || 'png';
 
   if (!username) {
     console.log('No username provided');
@@ -144,13 +145,27 @@ const server = http.createServer(async (req, res) => {
       },
     };
 
-    console.log('Generating chart');
-    const dataUrl = await chartJSNodeCanvas.renderToDataURL(configuration, 'image/png');
-    const base64Image = dataUrl.replace(/^data:image\/png;base64,/, '');
-    const imageBuffer = Buffer.from(base64Image, 'base64');
+    console.log(`Generating chart in ${format} format`);
+    let imageBuffer;
+    let contentType;
+
+    if (format === 'jpg' || format === 'jpeg') {
+      contentType = 'image/jpeg';
+      imageBuffer = await chartJSNodeCanvas.renderToBuffer(
+        configuration,
+        'image/jpeg'
+      );
+    } else {
+      contentType = 'image/png';
+      imageBuffer = await chartJSNodeCanvas.renderToBuffer(
+        configuration,
+        'image/png'
+      );
+    }
+
     console.log('Chart generated');
     res.writeHead(200, {
-      'Content-Type': 'image/png',
+      'Content-Type': contentType,
       'Content-Length': imageBuffer.length,
     });
     res.end(imageBuffer);

@@ -4,7 +4,7 @@ This project provides a simple API to generate a pie chart visualizing the most 
 
 ## Features
 
-- **Visual Pie Chart:** Generates a PNG image of language distribution.
+- **Visual Pie Chart:** Generates a PNG or JPG image of language distribution.
 - **JSON Data:** Option to retrieve raw language statistics in JSON format.
 - **Fork Filtering:** Automatically excludes forked repositories to reflect the user's actual contributions.
 
@@ -51,8 +51,13 @@ Once the server is running (default port 3000), you can access the API via your 
 Navigate to:
 `http://localhost:3000/{username}`
 
-**Example:**
-`http://localhost:3000/lxlgarnett`
+This generates a PNG image by default. You can specify the format using the `format` query parameter.
+
+**Supported Formats:** `png` (default), `jpg` (or `jpeg`)
+
+**Examples:**
+- Default (PNG): `http://localhost:3000/lxlgarnett`
+- JPG: `http://localhost:3000/lxlgarnett?format=jpg`
 
 ### Get JSON Data
 Add the `?format=json` query parameter to get the raw byte counts per language:

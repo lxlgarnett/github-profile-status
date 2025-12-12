@@ -79,6 +79,21 @@ describe('API Tests', function () {
     expect(Buffer.compare(Buffer.from(magicNumbers), pngSignature)).to.equal(0);
   });
 
+  it('should return a valid JPG image for a valid username with format=jpg', async () => {
+    mockGithubResponse();
+
+    const response = await axios.get(`http://localhost:${PORT}/lxlgarnett?format=jpg`, {
+      responseType: 'arraybuffer',
+    });
+
+    expect(response.status).to.equal(200);
+    expect(response.headers['content-type']).to.equal('image/jpeg');
+
+    const magicNumbers = response.data.slice(0, 3);
+    const jpgSignature = Buffer.from([0xff, 0xd8, 0xff]);
+    expect(Buffer.compare(Buffer.from(magicNumbers), jpgSignature)).to.equal(0);
+  });
+
   it('should return language statistics in JSON format, excluding forked repositories', async () => {
     mockGithubResponse();
 
