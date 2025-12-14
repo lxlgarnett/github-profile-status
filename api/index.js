@@ -23,7 +23,9 @@ const normalizeToken = (token) => {
   const trimmed = token.trim();
   const lowered = trimmed.toLowerCase();
 
-  return trimmed && lowered !== 'undefined' && lowered !== 'null' ? trimmed : '';
+  return trimmed && lowered !== 'undefined' && lowered !== 'null'
+    ? trimmed
+    : '';
 };
 
 const server = http.createServer(async (req, res) => {
@@ -34,9 +36,13 @@ const server = http.createServer(async (req, res) => {
 
   const githubToken = normalizeToken(process.env.GITHUB_TOKEN);
   if (githubToken) {
-    console.log(`GITHUB_TOKEN is set. Token starts with: ${githubToken.substring(0, 4)}...`);
+    console.log(
+      `GITHUB_TOKEN is set. Token starts with: ${githubToken.substring(0, 4)}...`
+    );
   } else {
-    console.log('GITHUB_TOKEN is NOT set. Using unauthenticated GitHub API access.');
+    console.log(
+      'GITHUB_TOKEN is NOT set. Using unauthenticated GitHub API access.'
+    );
   }
 
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -69,9 +75,12 @@ const server = http.createServer(async (req, res) => {
 
     const langStats = {};
     const langPromises = nonForkRepos.map((repo) =>
-      axiosInstance.get(`https://api.github.com/repos/${repo.full_name}/languages`, {
-        headers,
-      })
+      axiosInstance.get(
+        `https://api.github.com/repos/${repo.full_name}/languages`,
+        {
+          headers,
+        }
+      )
     );
 
     console.log('Fetching languages');
@@ -88,6 +97,10 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    const sortedLangStats = Object.entries(langStats)
+      .sort(([, a], [, b]) => b - a)
+      .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
     if (!['png', 'jpg', 'jpeg', 'json'].includes(format)) {
       console.log(`Unsupported format requested: ${format}`);
       res.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -97,12 +110,12 @@ const server = http.createServer(async (req, res) => {
 
     if (format === 'json') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(langStats));
+      res.end(JSON.stringify(sortedLangStats));
       return;
     }
 
-    const languages = Object.keys(langStats);
-    const counts = Object.values(langStats);
+    const languages = Object.keys(sortedLangStats);
+    const counts = Object.values(sortedLangStats);
 
     const configuration = {
       type: 'pie',
