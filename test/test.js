@@ -11,7 +11,7 @@ describe('API Tests', function () {
   before((done) => {
     // Set a dummy token for testing
     process.env.GITHUB_TOKEN = 'dummy-token';
-    
+
     serverInstance = server.listen(PORT, () => {
       console.log(`Test server running on port ${PORT}`);
       done();
@@ -70,7 +70,7 @@ describe('API Tests', function () {
 
     expect(response.status).to.equal(200);
     expect(response.headers['content-type']).to.equal('image/png');
-    
+
     // Check for PNG magic numbers
     const magicNumbers = response.data.slice(0, 8);
     const pngSignature = Buffer.from([
@@ -82,9 +82,12 @@ describe('API Tests', function () {
   it('should return a valid JPG image for a valid username with format=jpg', async () => {
     mockGithubResponse();
 
-    const response = await axios.get(`http://localhost:${PORT}/lxlgarnett?format=jpg`, {
-      responseType: 'arraybuffer',
-    });
+    const response = await axios.get(
+      `http://localhost:${PORT}/lxlgarnett?format=jpg`,
+      {
+        responseType: 'arraybuffer',
+      }
+    );
 
     expect(response.status).to.equal(200);
     expect(response.headers['content-type']).to.equal('image/jpeg');
@@ -97,9 +100,12 @@ describe('API Tests', function () {
   it('should treat format parameter case-insensitively', async () => {
     mockGithubResponse();
 
-    const response = await axios.get(`http://localhost:${PORT}/lxlgarnett?format=JPEG`, {
-      responseType: 'arraybuffer',
-    });
+    const response = await axios.get(
+      `http://localhost:${PORT}/lxlgarnett?format=JPEG`,
+      {
+        responseType: 'arraybuffer',
+      }
+    );
 
     expect(response.status).to.equal(200);
     expect(response.headers['content-type']).to.equal('image/jpeg');
@@ -108,7 +114,7 @@ describe('API Tests', function () {
     const jpgSignature = Buffer.from([0xff, 0xd8, 0xff]);
     expect(Buffer.compare(Buffer.from(magicNumbers), jpgSignature)).to.equal(0);
   });
-  
+
   it('should return language statistics in JSON format, excluding forked repositories', async () => {
     mockGithubResponse();
 
@@ -123,7 +129,12 @@ describe('API Tests', function () {
     // Verify correct stats based on mock data
     expect(response.data).to.have.property('Kotlin', 1000);
     expect(response.data).to.have.property('Python', 2000);
-    
+
+    // Verify sorting order (descending by value)
+    const keys = Object.keys(response.data);
+    expect(keys[0]).to.equal('Python');
+    expect(keys[1]).to.equal('Kotlin');
+
     // Verify forked repo languages are NOT present (we didn't even mock the call,
     // so if it tried to fetch it would fail or return 404/error from nock if strict)
     expect(response.data).to.not.have.property('Java');
@@ -141,7 +152,7 @@ describe('API Tests', function () {
       );
     }
   });
-  
+
   it('should return a 400 error for no username', async () => {
     try {
       await axios.get(`http://localhost:${PORT}/`);
