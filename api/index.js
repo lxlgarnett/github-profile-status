@@ -103,6 +103,7 @@ const server = http.createServer(async (req, res) => {
         }
       }
     }
+    console.log(langResult);
 
     const sortedLangStats = Object.entries(langStats)
       .sort(([, a], [, b]) => b - a)
