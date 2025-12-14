@@ -97,6 +97,26 @@ describe('API Tests', function () {
     expect(Buffer.compare(Buffer.from(magicNumbers), jpgSignature)).to.equal(0);
   });
 
+  it('should return a valid PNG image with cool_light theme', async () => {
+    mockGithubResponse();
+
+    const response = await axios.get(
+      `http://localhost:${PORT}/lxlgarnett?theme=cool_light`,
+      {
+        responseType: 'arraybuffer',
+      }
+    );
+
+    expect(response.status).to.equal(200);
+    expect(response.headers['content-type']).to.equal('image/png');
+
+    const magicNumbers = response.data.slice(0, 8);
+    const pngSignature = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+    expect(Buffer.compare(Buffer.from(magicNumbers), pngSignature)).to.equal(0);
+  });
+
   it('should treat format parameter case-insensitively', async () => {
     mockGithubResponse();
 

@@ -4,16 +4,16 @@ const { URL } = require('url');
 const axios = require('axios');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const ChartDataLabels = require('chartjs-plugin-datalabels');
-const { warmDarkTheme } = require('./theme');
+const { themes } = require('./theme');
 
 const axiosInstance = axios.create({ proxy: false });
 
 const width = 400;
 const height = 400;
+
 const chartJSNodeCanvas = new ChartJSNodeCanvas({
   width,
   height,
-  backgroundColour: warmDarkTheme.backgroundColour,
   plugins: {
     modern: [ChartDataLabels],
   },
@@ -56,6 +56,10 @@ const server = http.createServer(async (req, res) => {
 
   const username = reqUrl.pathname.slice(1);
   const format = (reqUrl.searchParams.get('format') || 'png').toLowerCase();
+  const themeName = (
+    reqUrl.searchParams.get('theme') || 'warm_dark'
+  ).toLowerCase();
+  const selectedTheme = themes[themeName] || themes['warm_dark'];
 
   if (!username) {
     console.log('No username provided');
@@ -136,24 +140,37 @@ const server = http.createServer(async (req, res) => {
         datasets: [
           {
             data: counts,
-            backgroundColor: warmDarkTheme.datasetColors,
-            borderColor: warmDarkTheme.borderColor,
+            backgroundColor: selectedTheme.datasetColors,
+            borderColor: selectedTheme.borderColor,
             borderWidth: 1,
           },
         ],
       },
+      plugins: [
+        {
+          id: 'custom_canvas_background_color',
+          beforeDraw: (chart) => {
+            const ctx = chart.ctx;
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-over';
+            ctx.fillStyle = selectedTheme.backgroundColour;
+            ctx.fillRect(0, 0, chart.width, chart.height);
+            ctx.restore();
+          },
+        },
+      ],
       options: {
         plugins: {
           legend: {
             labels: {
-              color: warmDarkTheme.labelColor,
+              color: selectedTheme.labelColor,
               font: {
                 family: 'sans-serif',
               },
             },
           },
           datalabels: {
-            color: warmDarkTheme.labelColor,
+            color: selectedTheme.labelColor,
             font: {
               family: 'sans-serif',
             },
@@ -196,7 +213,7 @@ const server = http.createServer(async (req, res) => {
     });
     res.end(imageBuffer);
   } catch (error) {
-    console.error('Error in server:', error.message);
+    console.error('Error in server:', error.stack);
     if (error.response) {
       console.error('Error response data:', error.response.data);
       console.error('Error response status:', error.response.status);
