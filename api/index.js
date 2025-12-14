@@ -103,11 +103,14 @@ const server = http.createServer(async (req, res) => {
         }
       }
     }
-    console.log(langResults);
-
     const sortedLangStats = Object.entries(langStats)
       .sort(([, a], [, b]) => b - a)
       .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+    console.log('Languages lines info:');
+    for (const [lang, lines] of Object.entries(sortedLangStats)) {
+      console.log(`${lang}: ${lines}`);
+    }
 
     if (!['png', 'jpg', 'jpeg', 'json'].includes(format)) {
       console.log(`Unsupported format requested: ${format}`);
