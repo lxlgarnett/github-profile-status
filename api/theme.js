@@ -12,6 +12,20 @@ const warmDarkTheme = {
   ],
 };
 
+const githubDarkTheme = {
+  backgroundColour: '#0D1117',
+  borderColor: '#30363D',
+  labelColor: '#C9D1D9',
+  datasetColors: [
+    '#58A6FF',
+    '#3FB950',
+    '#D29922',
+    '#F85149',
+    '#A371F7',
+    '#39C5CF',
+  ],
+};
+
 const coolLightTheme = {
   backgroundColour: '#ffffff',
   borderColor: '#ffffff',
@@ -28,6 +42,7 @@ const coolLightTheme = {
 
 const themes = {
   warm_dark: warmDarkTheme,
+  github_dark: githubDarkTheme,
   cool_light: coolLightTheme,
 };
 
