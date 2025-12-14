@@ -46,6 +46,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+
+  if (reqUrl.pathname === '/favicon.ico') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   const username = reqUrl.pathname.slice(1);
   const format = (reqUrl.searchParams.get('format') || 'png').toLowerCase();
 
@@ -96,10 +103,14 @@ const server = http.createServer(async (req, res) => {
         }
       }
     }
-
     const sortedLangStats = Object.entries(langStats)
       .sort(([, a], [, b]) => b - a)
       .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+    console.log('Languages lines info:');
+    for (const [lang, lines] of Object.entries(sortedLangStats)) {
+      console.log(`${lang}: ${lines}`);
+    }
 
     if (!['png', 'jpg', 'jpeg', 'json'].includes(format)) {
       console.log(`Unsupported format requested: ${format}`);
