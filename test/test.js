@@ -161,4 +161,9 @@ describe('API Tests', function () {
       expect(error.response.data).to.equal('Please provide a github username');
     }
   });
+
+  it('should return 204 for /favicon.ico', async () => {
+    const response = await axios.get(`http://localhost:${PORT}/favicon.ico`);
+    expect(response.status).to.equal(204);
+  });
 });
