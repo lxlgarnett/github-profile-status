@@ -4,6 +4,7 @@ const { URL } = require('url');
 const axios = require('axios');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const ChartDataLabels = require('chartjs-plugin-datalabels');
+const { warmDarkTheme } = require('./theme');
 
 const axiosInstance = axios.create({ proxy: false });
 
@@ -12,7 +13,7 @@ const height = 400;
 const chartJSNodeCanvas = new ChartJSNodeCanvas({
   width,
   height,
-  backgroundColour: '#22272e',
+  backgroundColour: warmDarkTheme.backgroundColour,
   plugins: {
     modern: [ChartDataLabels],
   },
@@ -135,16 +136,8 @@ const server = http.createServer(async (req, res) => {
         datasets: [
           {
             data: counts,
-            backgroundColor: [
-              '#3498db',
-              '#e74c3c',
-              '#2ecc71',
-              '#f1c40f',
-              '#9b59b6',
-              '#1abc9c',
-              '#34495e',
-            ],
-            borderColor: '#22272e',
+            backgroundColor: warmDarkTheme.datasetColors,
+            borderColor: warmDarkTheme.borderColor,
             borderWidth: 1,
           },
         ],
@@ -153,14 +146,14 @@ const server = http.createServer(async (req, res) => {
         plugins: {
           legend: {
             labels: {
-              color: '#ffffff',
+              color: warmDarkTheme.labelColor,
               font: {
                 family: 'sans-serif',
               },
             },
           },
           datalabels: {
-            color: '#ffffff',
+            color: warmDarkTheme.labelColor,
             font: {
               family: 'sans-serif',
             },
