@@ -27,6 +27,13 @@ describe('API Tests', function () {
     nock.cleanAll();
   });
 
+  /**
+   * Mocks the GitHub API responses for user repositories and their languages.
+   * Sets up nock interceptors for:
+   * - GET /users/lxlgarnett/repos
+   * - GET /repos/lxlgarnett/kotlin-repo/languages
+   * - GET /repos/lxlgarnett/python-repo/languages
+   */
   const mockGithubResponse = () => {
     // Mock user repos
     nock('https://api.github.com')
@@ -179,6 +186,15 @@ describe('API Tests', function () {
     } catch (error) {
       expect(error.response.status).to.equal(400);
       expect(error.response.data).to.equal('Please provide a github username');
+    }
+  });
+
+  it('should return a 400 error for invalid username format', async () => {
+    try {
+      await axios.get(`http://localhost:${PORT}/invalid--username`);
+    } catch (error) {
+      expect(error.response.status).to.equal(400);
+      expect(error.response.data).to.equal('Invalid github username');
     }
   });
 
