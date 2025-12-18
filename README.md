@@ -59,6 +59,17 @@ This generates a PNG image by default. You can specify the format using the `for
 - Default (PNG): `http://localhost:3000/lxlgarnett`
 - JPG: `http://localhost:3000/lxlgarnett?format=jpg`
 
+### Customize Theme
+You can change the color theme using the `theme` query parameter.
+
+**Supported Themes:**
+- `warm_dark` (default)
+- `github_dark`
+- `cool_light`
+
+**Example:**
+`http://localhost:3000/lxlgarnett?theme=github_dark`
+
 ### Get JSON Data
 Add the `?format=json` query parameter to get the raw byte counts per language:
 `http://localhost:3000/{username}?format=json`
