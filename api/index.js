@@ -68,6 +68,15 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const githubUsernameRegex =
+    /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
+  if (!githubUsernameRegex.test(username)) {
+    console.log(`Invalid username format: ${username}`);
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    res.end('Invalid github username');
+    return;
+  }
+
   try {
     console.log('Entering try block...');
     const headers = githubToken

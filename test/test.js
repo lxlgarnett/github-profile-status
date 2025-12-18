@@ -182,6 +182,15 @@ describe('API Tests', function () {
     }
   });
 
+  it('should return a 400 error for invalid username format', async () => {
+    try {
+      await axios.get(`http://localhost:${PORT}/invalid--username`);
+    } catch (error) {
+      expect(error.response.status).to.equal(400);
+      expect(error.response.data).to.equal('Invalid github username');
+    }
+  });
+
   it('should return 204 for /favicon.ico', async () => {
     const response = await axios.get(`http://localhost:${PORT}/favicon.ico`);
     expect(response.status).to.equal(204);
