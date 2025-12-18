@@ -19,6 +19,12 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({
   },
 });
 
+/**
+ * Normalizes the GitHub token by trimming whitespace and checking for 'undefined' or 'null' strings.
+ *
+ * @param {string} token - The GitHub token from environment variables.
+ * @returns {string} The normalized token or an empty string if invalid.
+ */
 const normalizeToken = (token) => {
   if (!token) return '';
   const trimmed = token.trim();
@@ -29,6 +35,13 @@ const normalizeToken = (token) => {
     : '';
 };
 
+/**
+ * The HTTP server request handler.
+ * Handles incoming requests to generate GitHub language usage charts.
+ *
+ * @param {http.IncomingMessage} req - The HTTP request object.
+ * @param {http.ServerResponse} res - The HTTP response object.
+ */
 const server = http.createServer(async (req, res) => {
   console.log(`Request received for URL: ${req.url}`);
 

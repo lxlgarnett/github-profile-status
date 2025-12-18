@@ -27,6 +27,13 @@ describe('API Tests', function () {
     nock.cleanAll();
   });
 
+  /**
+   * Mocks the GitHub API responses for user repositories and their languages.
+   * Sets up nock interceptors for:
+   * - GET /users/lxlgarnett/repos
+   * - GET /repos/lxlgarnett/kotlin-repo/languages
+   * - GET /repos/lxlgarnett/python-repo/languages
+   */
   const mockGithubResponse = () => {
     // Mock user repos
     nock('https://api.github.com')
