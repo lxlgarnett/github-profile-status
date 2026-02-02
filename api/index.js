@@ -203,9 +203,9 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      sortedLangStats = Object.entries(langStats)
-        .sort(([, a], [, b]) => b - a)
-        .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+      sortedLangStats = Object.fromEntries(
+        Object.entries(langStats).sort(([, a], [, b]) => b - a)
+      );
 
       statsCache.set(username, { data: sortedLangStats, timestamp: now });
     }
