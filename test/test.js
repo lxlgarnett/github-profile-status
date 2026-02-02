@@ -29,42 +29,47 @@ describe('API Tests', function () {
 
   /**
    * Mocks the GitHub API responses for user repositories and their languages.
-   * Sets up nock interceptors for:
-   * - GET /users/lxlgarnett/repos
-   * - GET /repos/lxlgarnett/kotlin-repo/languages
-   * - GET /repos/lxlgarnett/python-repo/languages
+   * Sets up nock interceptor for:
+   * - POST /graphql
    */
   const mockGithubResponse = () => {
-    // Mock user repos
     nock('https://api.github.com')
-      .get('/users/lxlgarnett/repos')
-      .reply(200, [
-        {
-          full_name: 'lxlgarnett/kotlin-repo',
-          fork: false,
-        },
-        {
-          full_name: 'lxlgarnett/python-repo',
-          fork: false,
-        },
-        {
-          full_name: 'lxlgarnett/forked-repo',
-          fork: true,
-        },
-      ]);
-
-    // Mock languages for kotlin-repo
-    nock('https://api.github.com')
-      .get('/repos/lxlgarnett/kotlin-repo/languages')
+      .post('/graphql')
       .reply(200, {
-        Kotlin: 1000,
-      });
-
-    // Mock languages for python-repo
-    nock('https://api.github.com')
-      .get('/repos/lxlgarnett/python-repo/languages')
-      .reply(200, {
-        Python: 2000,
+        data: {
+          user: {
+            repositories: {
+              nodes: [
+                {
+                  name: 'kotlin-repo',
+                  languages: {
+                    edges: [
+                      {
+                        size: 1000,
+                        node: {
+                          name: 'Kotlin',
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  name: 'python-repo',
+                  languages: {
+                    edges: [
+                      {
+                        size: 2000,
+                        node: {
+                          name: 'Python',
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
       });
   };
 

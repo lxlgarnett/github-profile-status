@@ -11,6 +11,9 @@ const axiosInstance = axios.create({ proxy: false });
 const width = 400;
 const height = 400;
 
+const statsCache = new Map();
+const CACHE_TTL = 3600 * 1000 * 24; // 24 hours
+
 const chartJSNodeCanvas = new ChartJSNodeCanvas({
   width,
   height,
@@ -92,47 +95,120 @@ const server = http.createServer(async (req, res) => {
 
   try {
     console.log('Entering try block...');
-    const headers = githubToken
-      ? {
-          Authorization: `token ${githubToken}`,
-        }
-      : {};
+    
+    let sortedLangStats;
+    const now = Date.now();
 
-    console.log(`Fetching repos for ${username}`);
-    const repos = await axiosInstance.get(
-      `https://api.github.com/users/${username}/repos`,
-      { headers }
-    );
-    console.log('Repos fetched');
-
-    const nonForkRepos = repos.data.filter((repo) => !repo.fork);
-
-    const langStats = {};
-    const langPromises = nonForkRepos.map((repo) =>
-      axiosInstance.get(
-        `https://api.github.com/repos/${repo.full_name}/languages`,
-        {
-          headers,
-        }
-      )
-    );
-
-    console.log('Fetching languages');
-    const langResults = await Promise.all(langPromises);
-    console.log('Languages fetched');
-
-    for (const langResult of langResults) {
-      for (const lang in langResult.data) {
-        if (langStats[lang]) {
-          langStats[lang] += langResult.data[lang];
-        } else {
-          langStats[lang] = langResult.data[lang];
-        }
+    if (statsCache.has(username)) {
+      const { data, timestamp } = statsCache.get(username);
+      if (now - timestamp < CACHE_TTL) {
+        console.log(`Serving cached data for ${username}`);
+        sortedLangStats = data;
       }
     }
-    const sortedLangStats = Object.entries(langStats)
-      .sort(([, a], [, b]) => b - a)
-      .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+    if (!sortedLangStats) {
+      const headers = githubToken
+        ? {
+            Authorization: `token ${githubToken}`,
+          }
+        : {};
+
+      const langStats = {};
+
+      if (githubToken) {
+        console.log('Using GraphQL API for data fetching');
+        const query = `
+          query userInfo($login: String!) {
+            user(login: $login) {
+              repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
+                nodes {
+                  name
+                  languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+                    edges {
+                      size
+                      node {
+                        name
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `;
+
+        const graphqlResponse = await axiosInstance.post(
+          'https://api.github.com/graphql',
+          {
+            query,
+            variables: { login: username },
+          },
+          { headers }
+        );
+
+        if (graphqlResponse.data.errors) {
+            console.error('GraphQL Errors:', graphqlResponse.data.errors);
+            throw new Error('GraphQL Error');
+        }
+
+        const nodes = graphqlResponse.data.data.user.repositories.nodes;
+        
+        nodes.forEach(repo => {
+            if (repo.languages && repo.languages.edges) {
+                repo.languages.edges.forEach(edge => {
+                    const langName = edge.node.name;
+                    const langSize = edge.size;
+                    if (langStats[langName]) {
+                        langStats[langName] += langSize;
+                    } else {
+                        langStats[langName] = langSize;
+                    }
+                });
+            }
+        });
+
+      } else {
+        console.log('Using REST API for data fetching (No Token)');
+        console.log(`Fetching repos for ${username}`);
+        const repos = await axiosInstance.get(
+          `https://api.github.com/users/${username}/repos`,
+          { headers }
+        );
+        console.log('Repos fetched');
+
+        const nonForkRepos = repos.data.filter((repo) => !repo.fork);
+
+        const langPromises = nonForkRepos.map((repo) =>
+          axiosInstance.get(
+            `https://api.github.com/repos/${repo.full_name}/languages`,
+            {
+              headers,
+            }
+          )
+        );
+
+        console.log('Fetching languages');
+        const langResults = await Promise.all(langPromises);
+        console.log('Languages fetched');
+
+        for (const langResult of langResults) {
+          for (const lang in langResult.data) {
+            if (langStats[lang]) {
+              langStats[lang] += langResult.data[lang];
+            } else {
+              langStats[lang] = langResult.data[lang];
+            }
+          }
+        }
+      }
+
+      sortedLangStats = Object.entries(langStats)
+        .sort(([, a], [, b]) => b - a)
+        .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+      statsCache.set(username, { data: sortedLangStats, timestamp: now });
+    }
 
     console.log('Languages lines info:');
     for (const [lang, lines] of Object.entries(sortedLangStats)) {
