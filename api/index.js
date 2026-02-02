@@ -149,7 +149,7 @@ const server = http.createServer(async (req, res) => {
 
         if (graphqlResponse.data.errors) {
             console.error('GraphQL Errors:', graphqlResponse.data.errors);
-            throw new Error('GraphQL Error');
+            throw new Error('GraphQL Error: ' + graphqlResponse.data.errors[0].message);
         }
 
         const nodes = graphqlResponse.data.data.user.repositories.nodes;
