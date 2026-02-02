@@ -14,6 +14,30 @@ const height = 400;
 const statsCache = new Map();
 const CACHE_TTL = 3600 * 1000 * 24; // 24 hours
 
+const USER_INFO_QUERY = `
+  query userInfo($login: String!, $after: String) {
+    user(login: $login) {
+      repositories(ownerAffiliations: OWNER, isFork: false, first: 100, after: $after) {
+        nodes {
+          name
+          languages(first: 100, orderBy: {field: SIZE, direction: DESC}) {
+            edges {
+              size
+              node {
+                name
+              }
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+`;
+
 const chartJSNodeCanvas = new ChartJSNodeCanvas({
   width,
   height,
@@ -118,42 +142,34 @@ const server = http.createServer(async (req, res) => {
 
       if (githubToken) {
         console.log('Using GraphQL API for data fetching');
-        const query = `
-          query userInfo($login: String!) {
-            user(login: $login) {
-              repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
-                nodes {
-                  name
-                  languages(first: 100, orderBy: {field: SIZE, direction: DESC}) {
-                    edges {
-                      size
-                      node {
-                        name
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        `;
+        const query = USER_INFO_QUERY;
+        
+        let hasNextPage = true;
+        let afterCursor = null;
+        let nodes = [];
 
-        const graphqlResponse = await axiosInstance.post(
-          'https://api.github.com/graphql',
-          {
-            query,
-            variables: { login: username },
-          },
-          { headers }
-        );
+        while (hasNextPage) {
+          const graphqlResponse = await axiosInstance.post(
+            'https://api.github.com/graphql',
+            {
+              query,
+              variables: { login: username, after: afterCursor },
+            },
+            { headers }
+          );
 
-        if (graphqlResponse.data.errors) {
+          if (graphqlResponse.data.errors) {
             console.error('GraphQL Errors:', graphqlResponse.data.errors);
             throw new Error('GraphQL Error: ' + graphqlResponse.data.errors[0].message);
+          }
+
+          const repositories = graphqlResponse.data.data.user.repositories;
+          nodes = nodes.concat(repositories.nodes);
+          
+          hasNextPage = repositories.pageInfo.hasNextPage;
+          afterCursor = repositories.pageInfo.endCursor;
         }
 
-        const nodes = graphqlResponse.data.data.user.repositories.nodes;
-        
         nodes.forEach(repo => {
             if (repo.languages && repo.languages.edges) {
                 repo.languages.edges.forEach(edge => {

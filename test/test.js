@@ -67,6 +67,10 @@ describe('API Tests', function () {
                   },
                 },
               ],
+              pageInfo: {
+                hasNextPage: false,
+                endCursor: null
+              }
             },
           },
         },
