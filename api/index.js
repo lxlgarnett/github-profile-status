@@ -160,6 +160,13 @@ const server = http.createServer(async (req, res) => {
 
           if (graphqlResponse.data?.errors?.length > 0) {
             console.error('GraphQL Errors:', graphqlResponse.data.errors);
+
+            if (graphqlResponse.data.errors.some((e) => e.type === 'NOT_FOUND')) {
+              res.writeHead(404, { 'Content-Type': 'text/plain' });
+              res.end('User not found');
+              return;
+            }
+
             const errorMessages = graphqlResponse.data.errors
               .map((e) => e.message)
               .join(', ');
