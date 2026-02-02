@@ -190,11 +190,7 @@ const server = http.createServer(async (req, res) => {
                 repo.languages.edges.forEach(edge => {
                     const langName = edge.node.name;
                     const langSize = edge.size;
-                    if (langStats[langName]) {
-                        langStats[langName] += langSize;
-                    } else {
-                        langStats[langName] = langSize;
-                    }
+                    langStats[langName] = (langStats[langName] || 0) + langSize;
                 });
             }
         });
@@ -225,11 +221,7 @@ const server = http.createServer(async (req, res) => {
 
         for (const langResult of langResults) {
           for (const lang in langResult.data) {
-            if (langStats[lang]) {
-              langStats[lang] += langResult.data[lang];
-            } else {
-              langStats[lang] = langResult.data[lang];
-            }
+            langStats[lang] = (langStats[lang] || 0) + langResult.data[lang];
           }
         }
       }
