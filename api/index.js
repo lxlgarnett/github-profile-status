@@ -5,11 +5,18 @@ const axios = require('axios');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const ChartDataLabels = require('chartjs-plugin-datalabels');
 const { themes } = require('./theme');
+const Redis = require('ioredis');
 
 const axiosInstance = axios.create({ proxy: false });
 
 const width = 400;
 const height = 400;
+
+let redisClient;
+if (process.env.REDIS_URL) {
+  redisClient = new Redis(process.env.REDIS_URL);
+  redisClient.on('error', (err) => console.error('Redis Client Error', err));
+}
 
 const statsCache = new Map();
 const CACHE_TTL = 3600 * 1000 * 24; // 24 hours
@@ -124,7 +131,17 @@ const server = http.createServer(async (req, res) => {
     const now = Date.now();
     const cacheKey = githubToken ? `${username}:authed` : `${username}:unauthed`;
 
-    if (statsCache.has(cacheKey)) {
+    if (redisClient) {
+      try {
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+          console.log(`Serving cached data from Redis for ${cacheKey}`);
+          sortedLangStats = JSON.parse(cachedData);
+        }
+      } catch (error) {
+        console.error('Redis get error:', error);
+      }
+    } else if (statsCache.has(cacheKey)) {
       const { data, timestamp } = statsCache.get(cacheKey);
       if (now - timestamp < CACHE_TTL) {
         console.log(`Serving cached data for ${cacheKey}`);
@@ -230,7 +247,20 @@ const server = http.createServer(async (req, res) => {
         Object.entries(langStats).sort(([, a], [, b]) => b - a)
       );
 
-      statsCache.set(cacheKey, { data: sortedLangStats, timestamp: now });
+      if (redisClient) {
+        try {
+          await redisClient.set(
+            cacheKey,
+            JSON.stringify(sortedLangStats),
+            'PX',
+            CACHE_TTL
+          );
+        } catch (error) {
+          console.error('Redis set error:', error);
+        }
+      } else {
+        statsCache.set(cacheKey, { data: sortedLangStats, timestamp: now });
+      }
     }
 
     console.log('Languages lines info:');
