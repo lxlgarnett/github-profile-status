@@ -158,16 +158,23 @@ const server = http.createServer(async (req, res) => {
             { headers }
           );
 
-          if (graphqlResponse.data.errors) {
+          if (graphqlResponse.data?.errors?.length > 0) {
             console.error('GraphQL Errors:', graphqlResponse.data.errors);
-            throw new Error('GraphQL Error: ' + graphqlResponse.data.errors[0].message);
+            const errorMessages = graphqlResponse.data.errors
+              .map((e) => e.message)
+              .join(', ');
+            throw new Error(`GraphQL Error: ${errorMessages}`);
           }
 
-          const repositories = graphqlResponse.data.data.user.repositories;
-          nodes = nodes.concat(repositories.nodes);
-          
-          hasNextPage = repositories.pageInfo.hasNextPage;
-          afterCursor = repositories.pageInfo.endCursor;
+          const repositories = graphqlResponse.data?.data?.user?.repositories;
+          if (!repositories) {
+            break;
+          }
+
+          nodes.push(...repositories.nodes);
+
+          hasNextPage = repositories.pageInfo?.hasNextPage;
+          afterCursor = repositories.pageInfo?.endCursor;
         }
 
         nodes.forEach(repo => {
