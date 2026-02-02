@@ -122,11 +122,12 @@ const server = http.createServer(async (req, res) => {
     
     let sortedLangStats;
     const now = Date.now();
+    const cacheKey = githubToken ? `${username}:authed` : `${username}:unauthed`;
 
-    if (statsCache.has(username)) {
-      const { data, timestamp } = statsCache.get(username);
+    if (statsCache.has(cacheKey)) {
+      const { data, timestamp } = statsCache.get(cacheKey);
       if (now - timestamp < CACHE_TTL) {
-        console.log(`Serving cached data for ${username}`);
+        console.log(`Serving cached data for ${cacheKey}`);
         sortedLangStats = data;
       }
     }
@@ -237,7 +238,7 @@ const server = http.createServer(async (req, res) => {
         Object.entries(langStats).sort(([, a], [, b]) => b - a)
       );
 
-      statsCache.set(username, { data: sortedLangStats, timestamp: now });
+      statsCache.set(cacheKey, { data: sortedLangStats, timestamp: now });
     }
 
     console.log('Languages lines info:');
