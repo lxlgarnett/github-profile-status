@@ -5,11 +5,45 @@ const axios = require('axios');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const ChartDataLabels = require('chartjs-plugin-datalabels');
 const { themes } = require('./theme');
+const Redis = require('ioredis');
 
 const axiosInstance = axios.create({ proxy: false });
 
 const width = 400;
 const height = 400;
+
+let redisClient;
+if (process.env.REDIS_URL) {
+  redisClient = new Redis(process.env.REDIS_URL);
+  redisClient.on('error', (err) => console.error('Redis Client Error', err));
+}
+
+const statsCache = new Map();
+const CACHE_TTL = 3600 * 1000 * 24; // 24 hours
+
+const USER_INFO_QUERY = `
+  query userInfo($login: String!, $after: String) {
+    user(login: $login) {
+      repositories(ownerAffiliations: OWNER, isFork: false, first: 100, after: $after) {
+        nodes {
+          name
+          languages(first: 100, orderBy: {field: SIZE, direction: DESC}) {
+            edges {
+              size
+              node {
+                name
+              }
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+`;
 
 const chartJSNodeCanvas = new ChartJSNodeCanvas({
   width,
@@ -92,47 +126,142 @@ const server = http.createServer(async (req, res) => {
 
   try {
     console.log('Entering try block...');
-    const headers = githubToken
-      ? {
-          Authorization: `token ${githubToken}`,
+    
+    let sortedLangStats;
+    const now = Date.now();
+    const cacheKey = githubToken ? `${username}:authed` : `${username}:unauthed`;
+
+    if (redisClient) {
+      try {
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+          console.log(`Serving cached data from Redis for ${cacheKey}`);
+          sortedLangStats = JSON.parse(cachedData);
         }
-      : {};
-
-    console.log(`Fetching repos for ${username}`);
-    const repos = await axiosInstance.get(
-      `https://api.github.com/users/${username}/repos`,
-      { headers }
-    );
-    console.log('Repos fetched');
-
-    const nonForkRepos = repos.data.filter((repo) => !repo.fork);
-
-    const langStats = {};
-    const langPromises = nonForkRepos.map((repo) =>
-      axiosInstance.get(
-        `https://api.github.com/repos/${repo.full_name}/languages`,
-        {
-          headers,
-        }
-      )
-    );
-
-    console.log('Fetching languages');
-    const langResults = await Promise.all(langPromises);
-    console.log('Languages fetched');
-
-    for (const langResult of langResults) {
-      for (const lang in langResult.data) {
-        if (langStats[lang]) {
-          langStats[lang] += langResult.data[lang];
-        } else {
-          langStats[lang] = langResult.data[lang];
-        }
+      } catch (error) {
+        console.error('Redis get error:', error);
+      }
+    } else if (statsCache.has(cacheKey)) {
+      const { data, timestamp } = statsCache.get(cacheKey);
+      if (now - timestamp < CACHE_TTL) {
+        console.log(`Serving cached data for ${cacheKey}`);
+        sortedLangStats = data;
       }
     }
-    const sortedLangStats = Object.entries(langStats)
-      .sort(([, a], [, b]) => b - a)
-      .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+    if (!sortedLangStats) {
+      const headers = githubToken
+        ? {
+            Authorization: `token ${githubToken}`,
+          }
+        : {};
+
+      const langStats = {};
+
+      if (githubToken) {
+        console.log('Using GraphQL API for data fetching');
+        const query = USER_INFO_QUERY;
+        
+        let hasNextPage = true;
+        let afterCursor = null;
+        let nodes = [];
+
+        while (hasNextPage) {
+          const graphqlResponse = await axiosInstance.post(
+            'https://api.github.com/graphql',
+            {
+              query,
+              variables: { login: username, after: afterCursor },
+            },
+            { headers }
+          );
+
+          if (graphqlResponse.data?.errors?.length > 0) {
+            console.error('GraphQL Errors:', graphqlResponse.data.errors);
+
+            if (graphqlResponse.data.errors.some((e) => e.type === 'NOT_FOUND')) {
+              res.writeHead(404, { 'Content-Type': 'text/plain' });
+              res.end('User not found');
+              return;
+            }
+
+            const errorMessages = graphqlResponse.data.errors
+              .map((e) => e.message)
+              .join(', ');
+            throw new Error(`GraphQL Error: ${errorMessages}`);
+          }
+
+          const repositories = graphqlResponse.data?.data?.user?.repositories;
+          if (!repositories) {
+            break;
+          }
+
+          nodes.push(...repositories.nodes);
+
+          hasNextPage = repositories.pageInfo?.hasNextPage;
+          afterCursor = repositories.pageInfo?.endCursor;
+        }
+
+        nodes.forEach(repo => {
+            if (repo.languages && repo.languages.edges) {
+                repo.languages.edges.forEach(edge => {
+                    const langName = edge.node.name;
+                    const langSize = edge.size;
+                    langStats[langName] = (langStats[langName] || 0) + langSize;
+                });
+            }
+        });
+
+      } else {
+        console.log('Using REST API for data fetching (No Token)');
+        console.log(`Fetching repos for ${username}`);
+        const repos = await axiosInstance.get(
+          `https://api.github.com/users/${username}/repos`,
+          { headers }
+        );
+        console.log('Repos fetched');
+
+        const nonForkRepos = repos.data.filter((repo) => !repo.fork);
+
+        const langPromises = nonForkRepos.map((repo) =>
+          axiosInstance.get(
+            `https://api.github.com/repos/${repo.full_name}/languages`,
+            {
+              headers,
+            }
+          )
+        );
+
+        console.log('Fetching languages');
+        const langResults = await Promise.all(langPromises);
+        console.log('Languages fetched');
+
+        for (const langResult of langResults) {
+          for (const lang in langResult.data) {
+            langStats[lang] = (langStats[lang] || 0) + langResult.data[lang];
+          }
+        }
+      }
+
+      sortedLangStats = Object.fromEntries(
+        Object.entries(langStats).sort(([, a], [, b]) => b - a)
+      );
+
+      if (redisClient) {
+        try {
+          await redisClient.set(
+            cacheKey,
+            JSON.stringify(sortedLangStats),
+            'PX',
+            CACHE_TTL
+          );
+        } catch (error) {
+          console.error('Redis set error:', error);
+        }
+      } else {
+        statsCache.set(cacheKey, { data: sortedLangStats, timestamp: now });
+      }
+    }
 
     console.log('Languages lines info:');
     for (const [lang, lines] of Object.entries(sortedLangStats)) {
