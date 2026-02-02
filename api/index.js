@@ -124,7 +124,7 @@ const server = http.createServer(async (req, res) => {
               repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
                 nodes {
                   name
-                  languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+                  languages(first: 100, orderBy: {field: SIZE, direction: DESC}) {
                     edges {
                       size
                       node {
