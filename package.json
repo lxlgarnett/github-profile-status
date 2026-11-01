@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node api/index.js",
     "test": "mocha",
-    "format": "prettier --write 'api/**/*.js' 'test/**/*.js'"
+    "format": "prettier --write 'api/**/*.js' 'test/**/*.js'",
+    "sonar": "sh scripts/sonar.sh"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "ioredis": "^5.9.2"
   },
   "devDependencies": {
+    "c8": "^12.0.0",
     "chai": "^6.2.1",
     "mocha": "^12.0.1",
     "nock": "^14.0.10",
